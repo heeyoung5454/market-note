@@ -1,0 +1,126 @@
+.stock-table-wrap {
+  width: 100%;
+}
+
+.stock-tabs {
+  display: flex;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.stock-tabs__item {
+  flex: 1;
+  padding: 16px 12px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #a3a3a3;
+  text-align: center;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, font-weight 0.15s ease;
+}
+
+.stock-tabs__item:hover {
+  color: #525252;
+}
+
+.stock-tabs__item--active {
+  color: #171717;
+  font-weight: 700;
+  border-bottom-color: #171717;
+}
+
+.stock-table__meta {
+  padding: 12px 30px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 400;
+  color: #a3a3a3;
+}
+
+.stock-table {
+  width: 100%;
+  min-width: 22rem;
+  border-collapse: collapse;
+}
+
+.stock-table thead th,
+.stock-table tbody td {
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.stock-table td {
+  padding: 20px 30px;
+  vertical-align: middle;
+}
+
+.stock-table__head--meta {
+  padding: 12px 30px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 400;
+  color: #a3a3a3;
+}
+
+.stock-table__head--numeric {
+  padding: 12px 30px;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 400;
+  color: #a3a3a3;
+}
+
+.stock-table__cell--rank {
+  width: 3.5rem;
+}
+
+.stock-table__cell--name {
+  min-width: 0;
+}
+
+.stock-table__cell--numeric {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.stock-table__name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 600;
+  color: #171717;
+}
+
+.stock-table__rank {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stock-table__rank-number {
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  color: #737373;
+}
+
+.stock-table__price {
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #171717;
+}
+
+.stock-table__metric {
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  color: #171717;
+}
+
+.stock-table__change {
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}

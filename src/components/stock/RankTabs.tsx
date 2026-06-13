@@ -2,6 +2,7 @@
 
 import { useRankStore } from "@/store/useRankStore";
 import type { RankType } from "@/types/rank.type";
+import "./stock.css";
 
 const TABS: { type: RankType; label: string; description: string }[] = [
   { type: "volume", label: "거래량", description: "거래량 상위" },
@@ -17,7 +18,7 @@ export default function RankTabs() {
   const { selected, setSelected } = useRankStore();
 
   return (
-    <div className="grid grid-cols-3 gap-1 p-1.5">
+    <div className="stock-tabs" role="tablist" aria-label="순위 기준">
       {TABS.map(({ type, label }) => {
         const isActive = selected === type;
 
@@ -25,12 +26,10 @@ export default function RankTabs() {
           <button
             key={type}
             type="button"
+            role="tab"
+            aria-selected={isActive}
             onClick={() => setSelected(type)}
-            className={`rounded-lg px-3 py-2.5 text-center text-sm font-semibold transition-all ${
-              isActive
-                ? "bg-neutral-900 text-white shadow-sm"
-                : "text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800"
-            }`}
+            className={`stock-tabs__item${isActive ? " stock-tabs__item--active" : ""}`}
           >
             {label}
           </button>
