@@ -1,7 +1,10 @@
+"use client";
+
 import type { RankStock, RankType } from "@/types/rank.type";
 import { formatChangeRate } from "@/utils/formatChangeRate";
 import { formatMetricValue } from "@/utils/formatTradingValue";
 import { Heart } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function RankItem({
   stock,
@@ -12,11 +15,17 @@ export default function RankItem({
   rank: number;
   rankType: RankType;
 }) {
+  const router = useRouter();
   const change = formatChangeRate(stock.changeRate);
   const metric = formatMetricValue(rankType, stock);
 
+  const handleClick = () => {
+    const params = new URLSearchParams({ name: stock.name });
+    router.push(`/stock/${stock.code}?${params.toString()}`);
+  };
+
   return (
-    <tr>
+    <tr className="stock-table__row--clickable" onClick={handleClick}>
       <td className="stock-table__cell--rank">
         <div className="stock-table__rank">
           <Heart
@@ -32,7 +41,7 @@ export default function RankItem({
       </td>
 
       <td className="stock-table__cell--numeric">
-        <span className="stock-table__price">
+        <span className={`stock-table__price ${change.className}`}>
           {Number(stock.price).toLocaleString()}원
         </span>
       </td>

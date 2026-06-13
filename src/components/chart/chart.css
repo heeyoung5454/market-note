@@ -1,0 +1,61 @@
+.daily-chart {
+  position: relative;
+}
+
+.daily-chart__toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.daily-chart__toggle {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #737373;
+  background: #fafafa;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.daily-chart__toggle:hover {
+  color: #404040;
+  border-color: #d4d4d4;
+}
+
+.daily-chart__toggle--active {
+  color: #171717;
+  font-weight: 600;
+  background: #ffffff;
+  border-color: #171717;
+}
+
+.daily-chart__canvas {
+  width: 100%;
+}
+
+.daily-chart__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 360px;
+  font-size: 14px;
+  color: #a3a3a3;
+}
+
+.chart-container {
+  width: 100%;
+  height: 280px;
+}
+
+.daily-chart__volume {
+  width: 100%;
+  height: 80px;
+  margin-top: 4px;
+}

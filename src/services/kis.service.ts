@@ -1,3 +1,6 @@
+import type { DailyChartPoint, DailyChartSummary } from "@/types/chart.type";
+import dayjs from "dayjs";
+
 const BASE_URL = "https://openapi.koreainvestment.com:9443";
 
 type TokenCache = {
@@ -247,4 +250,92 @@ export async function getRankStocks(accessToken: string, type: RankType) {
   }
 
   return normalizeRankOutput(result);
+}
+
+function normalizeDailyChart(data: Record<string, unknown>) {
+  const items = (data.output2 ?? []) as Record<string, string>[];
+  const summaryRaw = (data.output1 ?? data.output ?? null) as
+    | Record<string, string>
+    | Record<string, string>[]
+    | null;
+
+  const summarySource = Array.isArray(summaryRaw)
+    ? summaryRaw[0]
+    : summaryRaw;
+
+  const output: DailyChartPoint[] = items
+    .map((item) => ({
+      date: item.stck_bsop_date ?? "",
+      open: Number(item.stck_oprc),
+      high: Number(item.stck_hgpr),
+      low: Number(item.stck_lwpr),
+      close: Number(item.stck_clpr),
+      volume: Number(item.acml_vol),
+    }))
+    .filter((item) => item.date && !Number.isNaN(item.close))
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  const summary: DailyChartSummary | null = summarySource
+    ? {
+        name: summarySource.hts_kor_isnm ?? summarySource.stk_nm,
+        code: summarySource.stck_shrn_iscd ?? summarySource.mksc_shrn_iscd,
+        price: summarySource.stck_prpr ?? summarySource.prpr,
+        changeRate: summarySource.prdy_ctrt,
+        volume: summarySource.acml_vol,
+        amount: summarySource.acml_tr_pbmn,
+        marketCap: summarySource.hts_avls,
+      }
+    : null;
+
+  return { output, summary };
+}
+
+async function fetchDailyChart(
+  accessToken: string,
+  symbol: string,
+  fromDate: string,
+  toDate: string
+) {
+  return fetchKisApi(
+    accessToken,
+    "/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice",
+    "FHKST03010100",
+    {
+      FID_COND_MRKT_DIV_CODE: "J",
+      FID_INPUT_ISCD: symbol,
+      FID_INPUT_DATE_1: fromDate,
+      FID_INPUT_DATE_2: toDate,
+      FID_PERIOD_DIV_CODE: "D",
+      FID_ORG_ADJ_PRC: "0",
+    }
+  );
+}
+
+export async function getDailyChart(
+  accessToken: string,
+  symbol: string,
+  days = 90
+) {
+  const toDate = dayjs().format("YYYYMMDD");
+  const fromDate = dayjs().subtract(days, "day").format("YYYYMMDD");
+  const result = await fetchDailyChart(
+    accessToken,
+    symbol,
+    fromDate,
+    toDate
+  );
+
+  if (result.rt_cd === "1" && result.msg_cd === "EGW00121") {
+    clearTokenCache();
+    const freshToken = await getValidAccessToken();
+    const retried = await fetchDailyChart(
+      freshToken,
+      symbol,
+      fromDate,
+      toDate
+    );
+    return normalizeDailyChart(retried);
+  }
+
+  return normalizeDailyChart(result);
 }
