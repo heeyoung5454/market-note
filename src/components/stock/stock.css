@@ -231,13 +231,34 @@
 }
 
 .stock-detail__chart-header {
-  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
 .stock-detail__chart-title {
   font-size: 14px;
   font-weight: 600;
   color: #404040;
+}
+
+.stock-detail__period-select {
+  min-width: 6.5rem;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #171717;
+  background-color: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.stock-detail__period-select:focus {
+  outline: none;
+  border-color: #171717;
 }
 
 .stock-detail__chart-state {

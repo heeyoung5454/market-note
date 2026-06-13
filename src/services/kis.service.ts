@@ -311,31 +311,78 @@ async function fetchDailyChart(
   );
 }
 
+async function fetchDailyChartWithRetry(
+  accessToken: string,
+  symbol: string,
+  fromDate: string,
+  toDate: string
+) {
+  let result = await fetchDailyChart(accessToken, symbol, fromDate, toDate);
+
+  if (result.rt_cd === "1" && result.msg_cd === "EGW00121") {
+    clearTokenCache();
+    const freshToken = await getValidAccessToken();
+    result = await fetchDailyChart(freshToken, symbol, fromDate, toDate);
+  }
+
+  return result;
+}
+
+function mergeChartPoints(
+  existing: DailyChartPoint[],
+  batch: DailyChartPoint[]
+) {
+  const map = new Map(existing.map((point) => [point.date, point]));
+
+  for (const point of batch) {
+    map.set(point.date, point);
+  }
+
+  return [...map.values()].sort((a, b) => a.date.localeCompare(b.date));
+}
+
 export async function getDailyChart(
   accessToken: string,
   symbol: string,
   days = 90
 ) {
-  const toDate = dayjs().format("YYYYMMDD");
   const fromDate = dayjs().subtract(days, "day").format("YYYYMMDD");
-  const result = await fetchDailyChart(
-    accessToken,
-    symbol,
-    fromDate,
-    toDate
-  );
+  let endDate = dayjs().format("YYYYMMDD");
+  let output: DailyChartPoint[] = [];
+  let summary: DailyChartSummary | null = null;
 
-  if (result.rt_cd === "1" && result.msg_cd === "EGW00121") {
-    clearTokenCache();
-    const freshToken = await getValidAccessToken();
-    const retried = await fetchDailyChart(
-      freshToken,
+  for (let page = 0; page < 20; page++) {
+    const result = await fetchDailyChartWithRetry(
+      accessToken,
       symbol,
       fromDate,
-      toDate
+      endDate
     );
-    return normalizeDailyChart(retried);
+    const normalized = normalizeDailyChart(result);
+
+    if (normalized.summary) {
+      summary = normalized.summary;
+    }
+
+    if (!normalized.output.length) {
+      break;
+    }
+
+    output = mergeChartPoints(output, normalized.output);
+
+    const oldestDate = normalized.output[0].date;
+
+    if (oldestDate <= fromDate || normalized.output.length < 100) {
+      break;
+    }
+
+    endDate = dayjs(oldestDate, "YYYYMMDD")
+      .subtract(1, "day")
+      .format("YYYYMMDD");
   }
 
-  return normalizeDailyChart(result);
+  return {
+    output: output.filter((point) => point.date >= fromDate),
+    summary,
+  };
 }
