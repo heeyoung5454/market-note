@@ -10,14 +10,16 @@ export default function RankItem({
   stock,
   rank,
   rankType,
+  marketValueSortCode,
 }: {
   stock: RankStock;
   rank: number;
   rankType: RankType;
+  marketValueSortCode?: string;
 }) {
   const router = useRouter();
   const change = formatChangeRate(stock.changeRate);
-  const metric = formatMetricValue(rankType, stock);
+  const metric = formatMetricValue(rankType, stock, marketValueSortCode);
 
   const handleClick = () => {
     const params = new URLSearchParams({ name: stock.name });

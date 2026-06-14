@@ -9,8 +9,9 @@
 
 .stock-tabs__item {
   flex: 1;
-  padding: 16px 12px;
-  font-size: 15px;
+  min-width: 0;
+  padding: 16px 8px;
+  font-size: 14px;
   font-weight: 500;
   color: #a3a3a3;
   text-align: center;
@@ -36,11 +37,50 @@
 }
 
 .stock-table__meta {
-  padding: 12px 30px;
+  padding: 12px 30px 8px;
   text-align: left;
   font-size: 12px;
   font-weight: 400;
   color: #a3a3a3;
+}
+
+.stock-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 0 30px 12px;
+}
+
+.stock-filters__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stock-filters__label {
+  font-size: 12px;
+  color: #737373;
+  white-space: nowrap;
+}
+
+.stock-filters__select {
+  min-width: 6.5rem;
+  padding: 6px 28px 6px 10px;
+  font-size: 12px;
+  color: #171717;
+  background-color: #fafafa;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23737373' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+
+.stock-filters__select:focus {
+  outline: none;
+  border-color: #a3a3a3;
 }
 
 .stock-table {

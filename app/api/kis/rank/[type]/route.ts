@@ -1,10 +1,10 @@
-import { getAccessToken, getRankStocks } from "@/services/kis.service";
+import { handleRankRequest } from "@/lib/handleRankRequest";
 import type { RankType } from "@/types/rank.type";
 
-const VALID_TYPES: RankType[] = ["volume", "rise", "amount"];
+const VALID_TYPES: RankType[] = ["volume", "rise", "amount", "marketValue"];
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ type: string }> }
 ) {
   const { type } = await params;
@@ -16,26 +16,5 @@ export async function GET(
     );
   }
 
-  try {
-    const tokenData = await getAccessToken();
-    const accessToken = tokenData.access_token;
-
-    if (!accessToken) {
-      return Response.json(
-        {
-          error: "KIS access token을 발급받지 못했습니다.",
-          detail: tokenData,
-        },
-        { status: 502 }
-      );
-    }
-
-    const result = await getRankStocks(accessToken, type as RankType);
-    return Response.json(result);
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "KIS API 요청 실패";
-
-    return Response.json({ error: message }, { status: 502 });
-  }
+  return handleRankRequest(request, type as RankType);
 }

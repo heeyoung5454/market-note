@@ -6,8 +6,8 @@ import { useRankStocks } from "@/hooks/useRankStocks";
 import { useRankStore } from "@/store/useRankStore";
 
 export default function Home() {
-  const { selected } = useRankStore();
-  const { data, isLoading, error } = useRankStocks(selected);
+  const { selected, options } = useRankStore();
+  const { data, isLoading, error } = useRankStocks(selected, options[selected]);
 
   return (
     <main className="min-h-screen bg-[#F4F5F7]">

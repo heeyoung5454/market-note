@@ -141,7 +141,7 @@ export async function getCurrentPrice(accessToken: string, symbol: string) {
   return result;
 }
 
-type RankType = "volume" | "rise" | "amount";
+type RankType = "volume" | "rise" | "amount" | "marketValue";
 
 const RANK_API: Record<
   RankType,
@@ -165,20 +165,18 @@ const RANK_API: Record<
     },
   },
   amount: {
-    path: "/uapi/domestic-stock/v1/quotations/volume-rank",
-    trId: "FHPST01710000",
+    path: "/uapi/domestic-stock/v1/ranking/market-cap",
+    trId: "FHPST01740000",
     params: {
-      FID_COND_MRKT_DIV_CODE: "J",
-      FID_COND_SCR_DIV_CODE: "20171",
-      FID_INPUT_ISCD: "0000",
-      FID_DIV_CLS_CODE: "0",
-      FID_BLNG_CLS_CODE: "3",
-      FID_TRGT_CLS_CODE: "111111111",
-      FID_TRGT_EXLS_CLS_CODE: "0000000000",
-      FID_INPUT_PRICE_1: "",
-      FID_INPUT_PRICE_2: "",
-      FID_VOL_CNT: "",
-      FID_INPUT_DATE_1: "",
+      fid_cond_mrkt_div_code: "J",
+      fid_cond_scr_div_code: "20174",
+      fid_div_cls_code: "0",
+      fid_input_iscd: "0000",
+      fid_trgt_cls_code: "0",
+      fid_trgt_exls_cls_code: "0",
+      fid_input_price_1: "",
+      fid_input_price_2: "",
+      fid_vol_cnt: "",
     },
   },
   rise: {
@@ -189,7 +187,7 @@ const RANK_API: Record<
       fid_cond_scr_div_code: "20170",
       fid_input_iscd: "0000",
       fid_rank_sort_cls_code: "0",
-      fid_input_cnt_1: "30",
+      fid_input_cnt_1: "0",
       fid_prc_cls_code: "0",
       fid_input_price_1: "",
       fid_input_price_2: "",
@@ -199,6 +197,25 @@ const RANK_API: Record<
       fid_div_cls_code: "0",
       fid_rsfl_rate1: "0",
       fid_rsfl_rate2: "30",
+    },
+  },
+  marketValue: {
+    path: "/uapi/domestic-stock/v1/ranking/market-value",
+    trId: "FHPST01790000",
+    params: {
+      fid_trgt_cls_code: "0",
+      fid_cond_mrkt_div_code: "J",
+      fid_cond_scr_div_code: "20179",
+      fid_input_iscd: "0000",
+      fid_div_cls_code: "0",
+      fid_input_price_1: "",
+      fid_input_price_2: "",
+      fid_vol_cnt: "",
+      fid_input_option_1: String(new Date().getFullYear() - 1),
+      fid_input_option_2: "3",
+      fid_rank_sort_cls_code: "23",
+      fid_blng_cls_code: "0",
+      fid_trgt_exls_cls_code: "0",
     },
   },
 };
@@ -218,6 +235,16 @@ function normalizeRankOutput(data: Record<string, unknown>) {
       changeRate: item.prdy_ctrt,
       volume: item.acml_vol,
       amount: item.acml_tr_pbmn,
+      marketCap: item.stck_avls ?? item.hts_avls,
+      per: item.per,
+      pbr: item.pbr,
+      pcr: item.pcr,
+      psr: item.psr,
+      eps: item.eps,
+      eva: item.eva,
+      ebitda: item.ebitda,
+      pvDivEbitda: item.pv_div_ebitda,
+      ebitdaDivFnncExpn: item.ebitda_div_fnnc_expn,
     })),
   };
 }
@@ -244,13 +271,18 @@ async function fetchKisApi(
   return response.json();
 }
 
-export async function getRankStocks(accessToken: string, type: RankType) {
+export async function getRankStocks(
+  accessToken: string,
+  type: RankType,
+  overrides: Record<string, string> = {}
+) {
   const config = RANK_API[type];
+  const params = { ...config.params, ...overrides };
   const result = await fetchKisApi(
     accessToken,
     config.path,
     config.trId,
-    config.params
+    params
   );
 
   if (result.rt_cd === "1" && result.msg_cd === "EGW00121") {
@@ -260,7 +292,7 @@ export async function getRankStocks(accessToken: string, type: RankType) {
       freshToken,
       config.path,
       config.trId,
-      config.params
+      params
     );
     return normalizeRankOutput(retried);
   }
