@@ -1,18 +1,26 @@
 "use client";
 
 import type { DailyChartPoint } from "@/types/chart.type";
+import { getChartPeriodLabel } from "@/constants/chartPeriod";
 import { useState } from "react";
-import type { ChartViewType } from "./chartUtils";
+import { formatPeriodChangeSummary, isIntradayChart, type ChartViewType } from "./chartUtils";
 import DailyCandleChart from "./DailyCandleChart";
 import DailyLineChart from "./DailyLineChart";
 import "./chart.css";
 
 type DailyChartProps = {
   data: DailyChartPoint[];
+  periodDays: number;
 };
 
-export default function DailyChart({ data }: DailyChartProps) {
+export default function DailyChart({ data, periodDays }: DailyChartProps) {
   const [view, setView] = useState<ChartViewType>("line");
+  const intraday = isIntradayChart(data);
+  const periodChange = formatPeriodChangeSummary(
+    getChartPeriodLabel(periodDays),
+    data,
+    intraday
+  );
 
   if (!data.length) {
     return (
@@ -25,24 +33,36 @@ export default function DailyChart({ data }: DailyChartProps) {
   return (
     <div className="daily-chart">
       <div className="daily-chart__toolbar">
-        <button
-          type="button"
-          className={`daily-chart__toggle${
-            view === "line" ? " daily-chart__toggle--active" : ""
-          }`}
-          onClick={() => setView("line")}
-        >
-          라인차트 보기
-        </button>
-        <button
-          type="button"
-          className={`daily-chart__toggle${
-            view === "candle" ? " daily-chart__toggle--active" : ""
-          }`}
-          onClick={() => setView("candle")}
-        >
-          캔들형태 차트보기
-        </button>
+        {periodChange && (
+          <div className="daily-chart__period-change">
+            <p className="daily-chart__period-change-label">{periodChange.label}</p>
+            <p
+              className={`daily-chart__period-change-value ${periodChange.className}`}
+            >
+              {periodChange.valueText}
+            </p>
+          </div>
+        )}
+        <div className="daily-chart__toggle-group">
+          <button
+            type="button"
+            className={`daily-chart__toggle${
+              view === "line" ? " daily-chart__toggle--active" : ""
+            }`}
+            onClick={() => setView("line")}
+          >
+            라인차트 보기
+          </button>
+          <button
+            type="button"
+            className={`daily-chart__toggle${
+              view === "candle" ? " daily-chart__toggle--active" : ""
+            }`}
+            onClick={() => setView("candle")}
+          >
+            캔들형태 차트보기
+          </button>
+        </div>
       </div>
 
       {view === "line" ? (

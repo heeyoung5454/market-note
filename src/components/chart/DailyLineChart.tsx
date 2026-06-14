@@ -8,10 +8,13 @@ import {
 } from "lightweight-charts";
 import { useEffect, useRef } from "react";
 import {
-  buildColoredLineSegments,
+  attachCrosshairTooltip,
+  getLineSeriesData,
+  getPeriodLineColor,
   getPriceChartOptions,
   getVolumeChartOptions,
   getVolumeSeriesData,
+  isIntradayChart,
 } from "./chartUtils";
 import "./chart.css";
 
@@ -20,34 +23,47 @@ type DailyLineChartProps = {
 };
 
 export default function DailyLineChart({ data }: DailyLineChartProps) {
+  const canvasRef = useRef<HTMLDivElement>(null);
   const priceContainerRef = useRef<HTMLDivElement>(null);
   const volumeContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!priceContainerRef.current || !volumeContainerRef.current || !data.length) {
+    if (
+      !canvasRef.current ||
+      !priceContainerRef.current ||
+      !volumeContainerRef.current ||
+      !data.length
+    ) {
       return;
     }
 
+    const intraday = isIntradayChart(data);
+
     const priceChart = createChart(
       priceContainerRef.current,
-      getPriceChartOptions()
+      getPriceChartOptions({ isIntraday: intraday })
     );
     const volumeChart = createChart(
       volumeContainerRef.current,
-      getVolumeChartOptions()
+      getVolumeChartOptions(intraday)
     );
 
-    for (const segment of buildColoredLineSegments(data)) {
-      const lineSeries = priceChart.addSeries(LineSeries, {
-        color: segment.color,
-        lineWidth: 2,
-        crosshairMarkerVisible: false,
-        lastValueVisible: false,
-        priceLineVisible: false,
-      });
+    const lineSeries = priceChart.addSeries(LineSeries, {
+      color: getPeriodLineColor(data),
+      lineWidth: 2,
+      crosshairMarkerVisible: false,
+      lastValueVisible: false,
+      priceLineVisible: false,
+    });
 
-      lineSeries.setData(segment.points);
-    }
+    lineSeries.setData(getLineSeriesData(data));
+
+    const detachTooltip = attachCrosshairTooltip(
+      priceChart,
+      lineSeries,
+      canvasRef.current,
+      intraday
+    );
 
     const volumeSeries = volumeChart.addSeries(HistogramSeries, {
       color: "#d4d4d4",
@@ -75,6 +91,7 @@ export default function DailyLineChart({ data }: DailyLineChartProps) {
     resizeObserver.observe(volumeContainerRef.current);
 
     return () => {
+      detachTooltip();
       resizeObserver.disconnect();
       priceChart.remove();
       volumeChart.remove();
@@ -82,7 +99,7 @@ export default function DailyLineChart({ data }: DailyLineChartProps) {
   }, [data]);
 
   return (
-    <div className="daily-chart__canvas">
+    <div ref={canvasRef} className="daily-chart__canvas">
       <div ref={priceContainerRef} className="chart-container" />
       <div ref={volumeContainerRef} className="daily-chart__volume" />
     </div>

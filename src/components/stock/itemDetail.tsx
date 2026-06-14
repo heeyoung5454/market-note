@@ -15,7 +15,7 @@ type ItemDetailProps = {
 };
 
 export default function ItemDetail({ code, name }: ItemDetailProps) {
-  const [days, setDays] = useState<number>(90);
+  const [days, setDays] = useState<number>(1);
   const { data, isLoading, error } = useDailyChart(code, days);
   const summary = data?.summary;
   const displayName = summary?.name ?? name ?? code;
@@ -91,7 +91,7 @@ export default function ItemDetail({ code, name }: ItemDetailProps) {
           )}
 
           {!isLoading && !error && data?.output && (
-            <DailyChart data={data.output} />
+            <DailyChart data={data.output} periodDays={days} />
           )}
         </section>
       </div>

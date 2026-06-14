@@ -6,7 +6,7 @@ export async function GET(
 ) {
   const { symbol } = await params;
   const { searchParams } = new URL(request.url);
-  const days = Number(searchParams.get("days") ?? 90);
+  const days = Number(searchParams.get("days") ?? 1);
 
   try {
     const tokenData = await getAccessToken();
@@ -25,7 +25,7 @@ export async function GET(
     const result = await getDailyChart(
       accessToken,
       symbol,
-      Number.isNaN(days) ? 90 : days
+      Number.isNaN(days) ? 1 : days
     );
 
     return Response.json(result);

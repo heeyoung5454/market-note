@@ -12,10 +12,12 @@ import {
 } from "lightweight-charts";
 import { useEffect, useRef } from "react";
 import {
+  attachCrosshairTooltip,
+  getChartPointTime,
   getPriceChartOptions,
   getVolumeChartOptions,
   getVolumeSeriesData,
-  toChartTime,
+  isIntradayChart,
 } from "./chartUtils";
 import "./chart.css";
 
@@ -24,21 +26,29 @@ type DailyCandleChartProps = {
 };
 
 export default function DailyCandleChart({ data }: DailyCandleChartProps) {
+  const canvasRef = useRef<HTMLDivElement>(null);
   const priceContainerRef = useRef<HTMLDivElement>(null);
   const volumeContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!priceContainerRef.current || !volumeContainerRef.current || !data.length) {
+    if (
+      !canvasRef.current ||
+      !priceContainerRef.current ||
+      !volumeContainerRef.current ||
+      !data.length
+    ) {
       return;
     }
 
+    const intraday = isIntradayChart(data);
+
     const priceChart = createChart(
       priceContainerRef.current,
-      getPriceChartOptions()
+      getPriceChartOptions({ isIntraday: intraday })
     );
     const volumeChart = createChart(
       volumeContainerRef.current,
-      getVolumeChartOptions()
+      getVolumeChartOptions(intraday)
     );
 
     const candleSeries = priceChart.addSeries(CandlestickSeries, {
@@ -52,12 +62,19 @@ export default function DailyCandleChart({ data }: DailyCandleChartProps) {
 
     candleSeries.setData(
       data.map((item) => ({
-        time: toChartTime(item.date),
+        time: getChartPointTime(item),
         open: item.open,
         high: item.high,
         low: item.low,
         close: item.close,
       }))
+    );
+
+    const detachTooltip = attachCrosshairTooltip(
+      priceChart,
+      candleSeries,
+      canvasRef.current,
+      intraday
     );
 
     const volumeSeries = volumeChart.addSeries(HistogramSeries, {
@@ -86,6 +103,7 @@ export default function DailyCandleChart({ data }: DailyCandleChartProps) {
     resizeObserver.observe(volumeContainerRef.current);
 
     return () => {
+      detachTooltip();
       resizeObserver.disconnect();
       priceChart.remove();
       volumeChart.remove();
@@ -93,7 +111,7 @@ export default function DailyCandleChart({ data }: DailyCandleChartProps) {
   }, [data]);
 
   return (
-    <div className="daily-chart__canvas">
+    <div ref={canvasRef} className="daily-chart__canvas">
       <div ref={priceContainerRef} className="chart-container" />
       <div ref={volumeContainerRef} className="daily-chart__volume" />
     </div>

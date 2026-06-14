@@ -4,9 +4,38 @@
 
 .daily-chart__toolbar {
   display: flex;
-  justify-content: flex-end;
-  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
   margin-bottom: 12px;
+}
+
+.daily-chart__period-change {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.daily-chart__period-change-label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #2e2e2e;
+}
+
+.daily-chart__period-change-value {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.daily-chart__toggle-group {
+  display: flex;
+  flex-shrink: 0;
+  gap: 8px;
+  margin-left: auto;
 }
 
 .daily-chart__toggle {
@@ -37,7 +66,23 @@
 }
 
 .daily-chart__canvas {
+  position: relative;
   width: 100%;
+}
+
+.chart-tooltip {
+  position: absolute;
+  z-index: 2;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #171717;
+  white-space: nowrap;
+  pointer-events: none;
+  background: rgb(255 255 255 / 96%);
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
 }
 
 .daily-chart__empty {

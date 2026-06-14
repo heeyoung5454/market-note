@@ -3,6 +3,22 @@ import dayjs from "dayjs";
 
 const BASE_URL = "https://openapi.koreainvestment.com:9443";
 
+function getKstNow() {
+  const kst = new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  })
+    .format(new Date())
+    .replace(" ", "T");
+
+  return dayjs(kst);
+}
+
 type TokenCache = {
   accessToken: string;
   refreshAt: number;
@@ -341,13 +357,325 @@ function mergeChartPoints(
   return [...map.values()].sort((a, b) => a.date.localeCompare(b.date));
 }
 
+function isWeekend(date: dayjs.Dayjs) {
+  const day = date.day();
+  return day === 0 || day === 6;
+}
+
+function getPreviousTradingDay(date: dayjs.Dayjs) {
+  let tradingDay = date.subtract(1, "day");
+
+  while (isWeekend(tradingDay)) {
+    tradingDay = tradingDay.subtract(1, "day");
+  }
+
+  return tradingDay;
+}
+
+function resolveDailyChartDateRange(days: number) {
+  const today = dayjs();
+  const endDate = today.format("YYYYMMDD");
+
+  if (days > 1) {
+    const fromDate = today.subtract(days, "day").format("YYYYMMDD");
+    return { fetchFromDate: fromDate, displayFromDate: fromDate, endDate };
+  }
+
+  const yesterday = today.subtract(1, "day");
+
+  if (!isWeekend(yesterday)) {
+    const fromDate = yesterday.format("YYYYMMDD");
+    return { fetchFromDate: fromDate, displayFromDate: fromDate, endDate };
+  }
+
+  const lastTradingDay = getPreviousTradingDay(today);
+  const priorTradingDay = getPreviousTradingDay(lastTradingDay);
+  const fromDate = priorTradingDay.format("YYYYMMDD");
+
+  return { fetchFromDate: fromDate, displayFromDate: fromDate, endDate };
+}
+
+function resolveIntradayQuery() {
+  const today = getKstNow();
+
+  if (isWeekend(today)) {
+    const lastTradingDay = getPreviousTradingDay(today);
+
+    return {
+      targetDate: lastTradingDay.format("YYYYMMDD"),
+      isToday: false,
+    };
+  }
+
+  return {
+    targetDate: today.format("YYYYMMDD"),
+    isToday: true,
+  };
+}
+
+function getIntradayCursor(isToday: boolean) {
+  if (!isToday) {
+    return "153000";
+  }
+
+  const time = getKstNow().format("HHmmss");
+
+  if (time < "090000") {
+    return "090000";
+  }
+
+  if (time > "153000") {
+    return "153000";
+  }
+
+  return time;
+}
+
+function normalizeMinuteChartOutput(data: Record<string, unknown>) {
+  const items = (data.output2 ?? []) as Record<string, string>[];
+  const summaryRaw = (data.output1 ?? null) as
+    | Record<string, string>
+    | Record<string, string>[]
+    | null;
+
+  const summarySource = Array.isArray(summaryRaw)
+    ? summaryRaw[0]
+    : summaryRaw;
+
+  const output = items
+    .map((item) => ({
+      date: item.stck_bsop_date ?? "",
+      time: (item.stck_cntg_hour ?? "").padStart(6, "0"),
+      open: Number(item.stck_oprc),
+      high: Number(item.stck_hgpr),
+      low: Number(item.stck_lwpr),
+      close: Number(item.stck_prpr),
+      volume: Number(item.cntg_vol),
+    }))
+    .filter(
+      (item) =>
+        item.date &&
+        item.time &&
+        !Number.isNaN(item.close) &&
+        !Number.isNaN(item.open)
+    )
+    .sort(
+      (a, b) =>
+        a.date.localeCompare(b.date) || a.time.localeCompare(b.time)
+    );
+
+  const summary: DailyChartSummary | null = summarySource
+    ? {
+        name: summarySource.hts_kor_isnm ?? summarySource.stk_nm,
+        code: summarySource.stck_shrn_iscd ?? summarySource.mksc_shrn_iscd,
+        price: summarySource.stck_prpr ?? summarySource.prpr,
+        changeRate: summarySource.prdy_ctrt,
+        volume: summarySource.acml_vol,
+        amount: summarySource.acml_tr_pbmn,
+        marketCap: summarySource.hts_avls,
+      }
+    : null;
+
+  return { output, summary };
+}
+
+type MinuteBar = DailyChartPoint & { time: string };
+
+function aggregateToHourlyBars(minutes: MinuteBar[]) {
+  const groups = new Map<string, MinuteBar[]>();
+
+  for (const bar of minutes) {
+    const hourKey = `${bar.date}${bar.time.slice(0, 2)}`;
+    const bucket = groups.get(hourKey) ?? [];
+    bucket.push(bar);
+    groups.set(hourKey, bucket);
+  }
+
+  return [...groups.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([, bars]) => {
+      const sorted = [...bars].sort((a, b) => a.time.localeCompare(b.time));
+      const first = sorted[0];
+      const last = sorted[sorted.length - 1];
+
+      return {
+        date: first.date,
+        time: `${first.time.slice(0, 2)}0000`,
+        open: first.open,
+        high: Math.max(...sorted.map((bar) => bar.high)),
+        low: Math.min(...sorted.map((bar) => bar.low)),
+        close: last.close,
+        volume: sorted.reduce((sum, bar) => sum + bar.volume, 0),
+      };
+    });
+}
+
+function getPreviousMinuteTime(time: string) {
+  const hours = Number(time.slice(0, 2));
+  const minutes = Number(time.slice(2, 4));
+  const seconds = time.length >= 6 ? time.slice(4, 6) : "00";
+  const totalMinutes = hours * 60 + minutes;
+
+  if (totalMinutes <= 9 * 60) {
+    return "090000";
+  }
+
+  const previous = totalMinutes - 1;
+  const previousHours = Math.floor(previous / 60);
+  const previousMinutes = previous % 60;
+
+  return `${String(previousHours).padStart(2, "0")}${String(previousMinutes).padStart(2, "0")}${seconds}`;
+}
+
+async function fetchMinuteChartPage(
+  accessToken: string,
+  symbol: string,
+  targetDate: string,
+  hour: string,
+  isToday: boolean
+) {
+  const path = isToday
+    ? "/uapi/domestic-stock/v1/quotations/inquire-time-itemchartprice"
+    : "/uapi/domestic-stock/v1/quotations/inquire-time-dailychartprice";
+  const trId = isToday ? "FHKST03010200" : "FHKST03010230";
+
+  const params: Record<string, string> = {
+    FID_COND_MRKT_DIV_CODE: "J",
+    FID_INPUT_ISCD: symbol,
+    FID_INPUT_HOUR_1: hour,
+  };
+
+  if (isToday) {
+    params.FID_ETC_CLS_CODE = "";
+    params.FID_PW_DATA_INCU_YN = "Y";
+  } else {
+    params.FID_INPUT_DATE_1 = targetDate;
+    params.FID_PW_DATA_INCU_YN = "Y";
+    params.FID_FAKE_TICK_INCU_YN = "";
+  }
+
+  let result = await fetchKisApi(accessToken, path, trId, params);
+
+  if (result.rt_cd === "1" && result.msg_cd === "EGW00121") {
+    clearTokenCache();
+    const freshToken = await getValidAccessToken();
+    result = await fetchKisApi(freshToken, path, trId, params);
+  }
+
+  return result;
+}
+
+async function getIntradayMinuteBars(
+  accessToken: string,
+  symbol: string,
+  targetDate: string,
+  isToday: boolean
+) {
+  let cursor = getIntradayCursor(isToday);
+  const minPageSize = isToday ? 30 : 120;
+  const seen = new Set<string>();
+  const minutes: MinuteBar[] = [];
+  let summary: DailyChartSummary | null = null;
+
+  for (let page = 0; page < 25; page++) {
+    const result = await fetchMinuteChartPage(
+      accessToken,
+      symbol,
+      targetDate,
+      cursor,
+      isToday
+    );
+
+    if (result.rt_cd !== "0") {
+      break;
+    }
+
+    const normalized = normalizeMinuteChartOutput(result);
+
+    if (normalized.summary) {
+      summary = normalized.summary;
+    }
+
+    if (!normalized.output.length) {
+      break;
+    }
+
+    for (const bar of normalized.output) {
+      if (bar.date !== targetDate) {
+        continue;
+      }
+
+      const key = `${bar.date}${bar.time}`;
+
+      if (!seen.has(key)) {
+        seen.add(key);
+        minutes.push(bar as MinuteBar);
+      }
+    }
+
+    const dayBars = normalized.output.filter((bar) => bar.date === targetDate);
+
+    if (!dayBars.length) {
+      break;
+    }
+
+    const earliest = dayBars[0].time;
+
+    if (earliest <= "090000" || dayBars.length < minPageSize) {
+      break;
+    }
+
+    const nextCursor = getPreviousMinuteTime(earliest);
+
+    if (nextCursor === cursor) {
+      break;
+    }
+
+    cursor = nextCursor;
+  }
+
+  minutes.sort(
+    (a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time)
+  );
+
+  return {
+    minutes,
+    summary,
+  };
+}
+
+async function getIntradayHourlyChart(
+  accessToken: string,
+  symbol: string
+) {
+  const { targetDate, isToday } = resolveIntradayQuery();
+
+  const { minutes, summary } = await getIntradayMinuteBars(
+    accessToken,
+    symbol,
+    targetDate,
+    isToday
+  );
+
+  return {
+    output: aggregateToHourlyBars(minutes),
+    summary,
+    granularity: "hour" as const,
+    tradingDate: targetDate,
+  };
+}
+
 export async function getDailyChart(
   accessToken: string,
   symbol: string,
-  days = 90
+  days = 1
 ) {
-  const fromDate = dayjs().subtract(days, "day").format("YYYYMMDD");
-  let endDate = dayjs().format("YYYYMMDD");
+  if (days === 1) {
+    return getIntradayHourlyChart(accessToken, symbol);
+  }
+
+  let { fetchFromDate, displayFromDate, endDate } =
+    resolveDailyChartDateRange(days);
   let output: DailyChartPoint[] = [];
   let summary: DailyChartSummary | null = null;
 
@@ -355,7 +683,7 @@ export async function getDailyChart(
     const result = await fetchDailyChartWithRetry(
       accessToken,
       symbol,
-      fromDate,
+      fetchFromDate,
       endDate
     );
     const normalized = normalizeDailyChart(result);
@@ -372,7 +700,7 @@ export async function getDailyChart(
 
     const oldestDate = normalized.output[0].date;
 
-    if (oldestDate <= fromDate || normalized.output.length < 100) {
+    if (oldestDate <= fetchFromDate || normalized.output.length < 100) {
       break;
     }
 
@@ -382,7 +710,8 @@ export async function getDailyChart(
   }
 
   return {
-    output: output.filter((point) => point.date >= fromDate),
+    output: output.filter((point) => point.date >= displayFromDate),
     summary,
+    granularity: "day" as const,
   };
 }

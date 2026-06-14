@@ -1,5 +1,7 @@
 export type DailyChartPoint = {
   date: string;
+  /** HHMMSS — 1일(시간별) 차트일 때만 사용 */
+  time?: string;
   open: number;
   high: number;
   low: number;
@@ -20,4 +22,5 @@ export type DailyChartSummary = {
 export type DailyChartResponse = {
   output: DailyChartPoint[];
   summary: DailyChartSummary | null;
+  granularity?: "day" | "hour";
 };
