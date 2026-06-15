@@ -1,6 +1,7 @@
 "use client";
 
 import DailyChart from "@/components/chart/DailyChart";
+import StockNewsList from "@/components/stock/StockNewsList";
 import { CHART_PERIOD_OPTIONS } from "@/constants/chartPeriod";
 import { useDailyChart } from "@/hooks/useDailyChart";
 import { formatChangeRate } from "@/utils/formatChangeRate";
@@ -19,6 +20,7 @@ export default function ItemDetail({ code, name }: ItemDetailProps) {
   const { data, isLoading, error } = useDailyChart(code, days);
   const summary = data?.summary;
   const displayName = summary?.name ?? name ?? code;
+  const newsQuery = name ?? summary?.name;
   const price = summary?.price ?? "0";
   const change = formatChangeRate(summary?.changeRate);
 
@@ -60,39 +62,48 @@ export default function ItemDetail({ code, name }: ItemDetailProps) {
           )}
         </section>
 
-        <section className="stock-detail__chart">
-          <div className="stock-detail__chart-header">
-            <p className="stock-detail__chart-title">일별 추이</p>
-            <select
-              className="stock-detail__period-select"
-              value={days}
-              onChange={(event) => setDays(Number(event.target.value))}
-              aria-label="차트 기간 선택"
-            >
-              {CHART_PERIOD_OPTIONS.map(({ label, days: optionDays }) => (
-                <option key={optionDays} value={optionDays}>
-                  {label}
-                </option>
-              ))}
-            </select>
+        <section className="stock-detail__content">
+          <div className="stock-detail__chart">
+            <div className="stock-detail__chart-header">
+              <p className="stock-detail__chart-title">일별 추이</p>
+              <select
+                className="stock-detail__period-select"
+                value={days}
+                onChange={(event) => setDays(Number(event.target.value))}
+                aria-label="차트 기간 선택"
+              >
+                {CHART_PERIOD_OPTIONS.map(({ label, days: optionDays }) => (
+                  <option key={optionDays} value={optionDays}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {isLoading && (
+              <div className="stock-detail__chart-state">
+                <span className="stock-detail__spinner" />
+                차트를 불러오는 중...
+              </div>
+            )}
+
+            {error && (
+              <div className="stock-detail__chart-state stock-detail__chart-state--error">
+                차트 조회에 실패했습니다.
+              </div>
+            )}
+
+            {!isLoading && !error && data?.output && (
+              <DailyChart data={data.output} periodDays={days} />
+            )}
           </div>
 
-          {isLoading && (
-            <div className="stock-detail__chart-state">
-              <span className="stock-detail__spinner" />
-              차트를 불러오는 중...
-            </div>
-          )}
-
-          {error && (
-            <div className="stock-detail__chart-state stock-detail__chart-state--error">
-              차트 조회에 실패했습니다.
-            </div>
-          )}
-
-          {!isLoading && !error && data?.output && (
-            <DailyChart data={data.output} periodDays={days} />
-          )}
+          <StockNewsList
+            code={code}
+            query={newsQuery}
+            stockName={newsQuery}
+            changeRate={summary?.changeRate}
+          />
         </section>
       </div>
     </main>
