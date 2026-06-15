@@ -5,6 +5,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 type UseStockNewsOptions = {
   page?: number;
   pageSize?: number;
+  enabled?: boolean;
 };
 
 export function useStockNews(
@@ -14,6 +15,7 @@ export function useStockNews(
   const page = options.page ?? 1;
   const pageSize = options.pageSize ?? 10;
   const start = getNewsStart(page, pageSize);
+  const enabled = (options.enabled ?? true) && !!query;
 
   return useQuery({
     queryKey: ["stock-news", query, page, pageSize],
@@ -31,7 +33,7 @@ export function useStockNews(
 
       return response.json();
     },
-    enabled: !!query,
+    enabled,
     staleTime: 5 * 60_000,
     placeholderData: keepPreviousData,
   });

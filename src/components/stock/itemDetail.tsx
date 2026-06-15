@@ -1,6 +1,7 @@
 "use client";
 
 import DailyChart from "@/components/chart/DailyChart";
+import StockAiChat from "@/components/stock/StockAiChat";
 import StockNewsList from "@/components/stock/StockNewsList";
 import { CHART_PERIOD_OPTIONS } from "@/constants/chartPeriod";
 import { useDailyChart } from "@/hooks/useDailyChart";
@@ -106,6 +107,8 @@ export default function ItemDetail({ code, name }: ItemDetailProps) {
           />
         </section>
       </div>
+
+      <StockAiChat stockName={newsQuery} />
     </main>
   );
 }
