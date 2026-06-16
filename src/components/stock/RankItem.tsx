@@ -40,6 +40,7 @@ export default function RankItem({
 
       <td className="stock-table__cell--name">
         <span className="stock-table__name">{stock.name}</span>
+        <span className="stock-table__code">{stock.code}</span>
       </td>
 
       <td className="stock-table__cell--numeric">

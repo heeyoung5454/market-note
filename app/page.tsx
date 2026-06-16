@@ -2,6 +2,7 @@
 
 import RankList from "@/components/stock/RankList";
 import RankTabs from "@/components/stock/RankTabs";
+import StockMemoWidget from "@/components/stock/StockMemoWidget";
 import StockSearchTrigger from "@/components/stock/StockSearchTrigger";
 import { useRankStocks } from "@/hooks/useRankStocks";
 import { useRankStore } from "@/store/useRankStore";
@@ -12,6 +13,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#F4F5F7]">
+      <StockMemoWidget />
       <div className="mx-auto flex min-h-screen max-w-3xl flex-col px-4 py-6 sm:py-8">
         <header className="mb-5 shrink-0">
           <p className="text-xs font-medium uppercase tracking-widest text-neutral-400">
