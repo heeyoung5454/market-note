@@ -8,6 +8,7 @@ import {
 } from "lightweight-charts";
 import { useEffect, useRef } from "react";
 import {
+  applyIntradayTimeScale,
   attachCrosshairTooltip,
   getLineSeriesData,
   getPeriodLineColor,
@@ -77,8 +78,8 @@ export default function DailyLineChart({ data }: DailyLineChartProps) {
 
     volumeSeries.setData(getVolumeSeriesData(data));
 
-    priceChart.timeScale().fitContent();
-    volumeChart.timeScale().fitContent();
+    applyIntradayTimeScale(priceChart, data);
+    applyIntradayTimeScale(volumeChart, data);
 
     const resizeObserver = new ResizeObserver(() => {
       if (priceContainerRef.current && volumeContainerRef.current) {

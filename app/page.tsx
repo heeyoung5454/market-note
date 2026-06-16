@@ -2,6 +2,7 @@
 
 import RankList from "@/components/stock/RankList";
 import RankTabs from "@/components/stock/RankTabs";
+import StockSearchTrigger from "@/components/stock/StockSearchTrigger";
 import { useRankStocks } from "@/hooks/useRankStocks";
 import { useRankStore } from "@/store/useRankStore";
 
@@ -16,9 +17,14 @@ export default function Home() {
           <p className="text-xs font-medium uppercase tracking-widest text-neutral-400">
             Market Note
           </p>
-          <h1 className="mt-1 text-2xl font-bold text-neutral-900">
-            국내 주식 순위
-          </h1>
+          <div className="stock-rank-header__title-row">
+            <h1 className="stock-rank-header__title">
+              국내 주식 순위
+            </h1>
+            <div className="stock-rank-header__search">
+              <StockSearchTrigger />
+            </div>
+          </div>
         </header>
 
         <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)]">

@@ -32,15 +32,26 @@ export function toChartTime(date: string) {
 }
 
 export function toChartTimestamp(date: string, time: string) {
-  const year = Number(date.slice(0, 4));
-  const month = Number(date.slice(4, 6)) - 1;
-  const day = Number(date.slice(6, 8));
-  const hours = Number(time.slice(0, 2));
-  const minutes = Number(time.slice(2, 4));
+  const year = date.slice(0, 4);
+  const month = date.slice(4, 6);
+  const day = date.slice(6, 8);
+  const hours = time.slice(0, 2);
+  const minutes = time.slice(2, 4);
+  const seconds = time.length >= 6 ? time.slice(4, 6) : "00";
 
   return Math.floor(
-    Date.UTC(year, month, day, hours - 9, minutes, 0) / 1000
+    new Date(`${year}-${month}-${day}T${hours}:${minutes}:${seconds}+09:00`).getTime() /
+      1000
   );
+}
+
+function formatKstTime(timestamp: number) {
+  return new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date(timestamp * 1000));
 }
 
 export function getChartPointTime(point: DailyChartPoint): Time {
@@ -279,6 +290,33 @@ export function getVolumeColor(direction: ReturnType<typeof getDayDirection>) {
   return VOLUME_FLAT_COLOR;
 }
 
+function formatIntradayTickLabel(time: Time) {
+  if (typeof time !== "number") {
+    return null;
+  }
+
+  return formatKstTime(time);
+}
+
+function getIntradayChartLocalization() {
+  return {
+    locale: "ko-KR",
+    dateFormat: "yyyy.MM.dd",
+    timeFormatter: (time: Time) => formatCrosshairDate(time, true),
+  };
+}
+
+function getIntradayTimeScaleOptions() {
+  return {
+    borderVisible: false,
+    visible: true,
+    ticksVisible: true,
+    timeVisible: true,
+    secondsVisible: false,
+    tickMarkFormatter: (time: Time) => formatIntradayTickLabel(time),
+  };
+}
+
 export function getPriceChartOptions(
   options: { showTimeScale?: boolean; isIntraday?: boolean } = {}
 ): DeepPartial<TimeChartOptions> {
@@ -302,25 +340,24 @@ export function getPriceChartOptions(
         labelVisible: true,
       },
     },
-    localization: {
-      locale: "ko-KR",
-      dateFormat: "yyyy.MM.dd",
-      ...(isIntraday
-        ? {
-            timeFormatter: (time: Time) => formatCrosshairDate(time, true),
-          }
-        : {}),
-    },
+    localization: isIntraday
+      ? getIntradayChartLocalization()
+      : {
+          locale: "ko-KR",
+          dateFormat: "yyyy.MM.dd",
+        },
     rightPriceScale: {
       borderVisible: false,
     },
-    timeScale: {
-      borderVisible: false,
-      visible: showTimeScale || isIntraday,
-      ticksVisible: showTimeScale || isIntraday,
-      timeVisible: isIntraday,
-      secondsVisible: false,
-    },
+    timeScale: isIntraday
+      ? getIntradayTimeScaleOptions()
+      : {
+          borderVisible: false,
+          visible: showTimeScale,
+          ticksVisible: showTimeScale,
+          timeVisible: false,
+          secondsVisible: false,
+        },
     handleScroll: false,
     handleScale: false,
   };
@@ -337,16 +374,19 @@ export function getVolumeChartOptions(isIntraday = false): DeepPartial<TimeChart
       vertLines: { visible: false },
       horzLines: { color: "#f5f5f5" },
     },
+    localization: isIntraday ? getIntradayChartLocalization() : { locale: "ko-KR" },
     rightPriceScale: {
       borderVisible: false,
     },
-    timeScale: {
-      borderVisible: false,
-      visible: isIntraday,
-      ticksVisible: isIntraday,
-      timeVisible: isIntraday,
-      secondsVisible: false,
-    },
+    timeScale: isIntraday
+      ? getIntradayTimeScaleOptions()
+      : {
+          borderVisible: false,
+          visible: false,
+          ticksVisible: false,
+          timeVisible: false,
+          secondsVisible: false,
+        },
     handleScroll: false,
     handleScale: false,
   };
@@ -358,4 +398,67 @@ export function getVolumeSeriesData(data: DailyChartPoint[]) {
     value: item.volume,
     color: getVolumeColor(getDayDirection(data, index)),
   }));
+}
+
+function getKstDateString() {
+  return new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  })
+    .format(new Date())
+    .replace(/-/g, "");
+}
+
+function getKstTimeString() {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Seoul",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  })
+    .format(new Date())
+    .replace(/:/g, "");
+}
+
+export function getIntradayVisibleRange(data: DailyChartPoint[]) {
+  if (!data.length || !data[0].time) {
+    return null;
+  }
+
+  const date = data[0].date;
+  const from = toChartTimestamp(date, "090000") as Time;
+  const todayKst = getKstDateString();
+  const isToday = date === todayKst;
+
+  let toTime = isToday ? getKstTimeString() : "153000";
+
+  if (toTime < "090000") {
+    toTime = "090000";
+  }
+
+  if (toTime > "153000") {
+    toTime = "153000";
+  }
+
+  return {
+    from,
+    to: toChartTimestamp(date, toTime) as Time,
+  };
+}
+
+export function applyIntradayTimeScale(
+  chart: IChartApi,
+  data: DailyChartPoint[]
+) {
+  const range = getIntradayVisibleRange(data);
+
+  if (range) {
+    chart.timeScale().setVisibleRange(range);
+    return;
+  }
+
+  chart.timeScale().fitContent();
 }

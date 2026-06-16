@@ -22,5 +22,5 @@ export type DailyChartSummary = {
 export type DailyChartResponse = {
   output: DailyChartPoint[];
   summary: DailyChartSummary | null;
-  granularity?: "day" | "hour";
+  granularity?: "day" | "hour" | "5min";
 };

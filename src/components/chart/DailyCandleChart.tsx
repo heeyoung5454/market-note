@@ -12,6 +12,7 @@ import {
 } from "lightweight-charts";
 import { useEffect, useRef } from "react";
 import {
+  applyIntradayTimeScale,
   attachCrosshairTooltip,
   getChartPointTime,
   getPriceChartOptions,
@@ -89,8 +90,8 @@ export default function DailyCandleChart({ data }: DailyCandleChartProps) {
 
     volumeSeries.setData(getVolumeSeriesData(data));
 
-    priceChart.timeScale().fitContent();
-    volumeChart.timeScale().fitContent();
+    applyIntradayTimeScale(priceChart, data);
+    applyIntradayTimeScale(volumeChart, data);
 
     const resizeObserver = new ResizeObserver(() => {
       if (priceContainerRef.current && volumeContainerRef.current) {

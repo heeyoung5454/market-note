@@ -141,6 +141,35 @@ export async function getCurrentPrice(accessToken: string, symbol: string) {
   return result;
 }
 
+export async function getStockQuote(accessToken: string, code: string) {
+  const result = await getCurrentPrice(accessToken, code);
+
+  if (result.rt_cd !== "0") {
+    throw new Error(result.msg1 ?? "종목 조회 실패");
+  }
+
+  const raw = result.output ?? result.Output;
+  const output = (Array.isArray(raw) ? raw[0] : raw) as Record<string, string>;
+
+  const name =
+    output?.bstp_kor_isnm ??
+    output?.hts_kor_isnm ??
+    output?.rprs_mrkt_kor_name;
+
+  if (!name) {
+    throw new Error("종목 정보를 찾을 수 없습니다.");
+  }
+
+  return {
+    code: output.mksc_shrn_iscd ?? output.stck_shrn_iscd ?? code,
+    name,
+    price: Number(output.stck_prpr ?? output.prpr ?? 0),
+    change: Number(output.prdy_vrss ?? 0),
+    changeRate: Number(output.prdy_ctrt ?? 0),
+    volume: Number(output.acml_vol ?? 0),
+  };
+}
+
 type RankType = "volume" | "rise" | "amount" | "marketValue";
 
 const RANK_API: Record<
@@ -513,14 +542,26 @@ function normalizeMinuteChartOutput(data: Record<string, unknown>) {
 
 type MinuteBar = DailyChartPoint & { time: string };
 
-function aggregateToHourlyBars(minutes: MinuteBar[]) {
+function getFiveMinuteBucketTime(time: string) {
+  const hours = Number(time.slice(0, 2));
+  const minutes = Number(time.slice(2, 4));
+  const bucketMinutes = Math.floor(minutes / 5) * 5;
+
+  return `${String(hours).padStart(2, "0")}${String(bucketMinutes).padStart(2, "0")}00`;
+}
+
+function aggregateToFiveMinuteBars(minutes: MinuteBar[]) {
   const groups = new Map<string, MinuteBar[]>();
 
   for (const bar of minutes) {
-    const hourKey = `${bar.date}${bar.time.slice(0, 2)}`;
-    const bucket = groups.get(hourKey) ?? [];
+    if (bar.time < "090000") {
+      continue;
+    }
+
+    const bucketKey = `${bar.date}${getFiveMinuteBucketTime(bar.time)}`;
+    const bucket = groups.get(bucketKey) ?? [];
     bucket.push(bar);
-    groups.set(hourKey, bucket);
+    groups.set(bucketKey, bucket);
   }
 
   return [...groups.entries()]
@@ -529,10 +570,11 @@ function aggregateToHourlyBars(minutes: MinuteBar[]) {
       const sorted = [...bars].sort((a, b) => a.time.localeCompare(b.time));
       const first = sorted[0];
       const last = sorted[sorted.length - 1];
+      const bucketTime = getFiveMinuteBucketTime(first.time);
 
       return {
         date: first.date,
-        time: `${first.time.slice(0, 2)}0000`,
+        time: bucketTime,
         open: first.open,
         high: Math.max(...sorted.map((bar) => bar.high)),
         low: Math.min(...sorted.map((bar) => bar.low)),
@@ -604,12 +646,11 @@ async function getIntradayMinuteBars(
   isToday: boolean
 ) {
   let cursor = getIntradayCursor(isToday);
-  const minPageSize = isToday ? 30 : 120;
   const seen = new Set<string>();
   const minutes: MinuteBar[] = [];
   let summary: DailyChartSummary | null = null;
 
-  for (let page = 0; page < 25; page++) {
+  for (let page = 0; page < 40; page++) {
     const result = await fetchMinuteChartPage(
       accessToken,
       symbol,
@@ -653,7 +694,7 @@ async function getIntradayMinuteBars(
 
     const earliest = dayBars[0].time;
 
-    if (earliest <= "090000" || dayBars.length < minPageSize) {
+    if (earliest <= "090000") {
       break;
     }
 
@@ -676,7 +717,7 @@ async function getIntradayMinuteBars(
   };
 }
 
-async function getIntradayHourlyChart(
+async function getIntradayFiveMinuteChart(
   accessToken: string,
   symbol: string
 ) {
@@ -690,9 +731,9 @@ async function getIntradayHourlyChart(
   );
 
   return {
-    output: aggregateToHourlyBars(minutes),
+    output: aggregateToFiveMinuteBars(minutes),
     summary,
-    granularity: "hour" as const,
+    granularity: "5min" as const,
     tradingDate: targetDate,
   };
 }
@@ -703,7 +744,7 @@ export async function getDailyChart(
   days = 1
 ) {
   if (days === 1) {
-    return getIntradayHourlyChart(accessToken, symbol);
+    return getIntradayFiveMinuteChart(accessToken, symbol);
   }
 
   let { fetchFromDate, displayFromDate, endDate } =
