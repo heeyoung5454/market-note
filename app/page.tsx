@@ -35,6 +35,12 @@ export default function Home() {
             if (id === "watchlist") {
               router.push("/ai/stocks");
             }
+            if (id === "issue") {
+              router.push("/ai/issues");
+            }
+            if (id === "risk") {
+              router.push("/ai/risks");
+            }
           }}
         />
 

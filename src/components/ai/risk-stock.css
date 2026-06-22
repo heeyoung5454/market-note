@@ -1,0 +1,129 @@
+.risk-stock-page__loading,
+.risk-stock-page__error,
+.risk-stock-page__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 240px;
+  font-size: 14px;
+  color: #737373;
+  text-align: center;
+}
+
+.risk-stock-page__error {
+  color: #dc2626;
+}
+
+.risk-stock-page__spinner {
+  width: 28px;
+  height: 28px;
+  border: 2px solid #e5e5e5;
+  border-top-color: #dc2626;
+  border-radius: 999px;
+  animation: risk-stock-spin 0.8s linear infinite;
+}
+
+@keyframes risk-stock-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.risk-stock-page__list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.risk-stock-card {
+  padding: 18px 20px;
+  border: 1px solid #ececec;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.risk-stock-card--high {
+  border-color: #fecaca;
+  background: linear-gradient(180deg, #fef2f2 0%, #ffffff 100%);
+}
+
+.risk-stock-card--medium {
+  border-color: #fde68a;
+  background: linear-gradient(180deg, #fffdf5 0%, #ffffff 100%);
+}
+
+.risk-stock-card--low {
+  border-color: #e5e5e5;
+  background: linear-gradient(180deg, #fafafa 0%, #ffffff 100%);
+}
+
+.risk-stock-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.risk-stock-card__name {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #171717;
+}
+
+.risk-stock-card__level {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 999px;
+}
+
+.risk-stock-card__level--high {
+  color: #b91c1c;
+  background: #fee2e2;
+}
+
+.risk-stock-card__level--medium {
+  color: #b45309;
+  background: #fef3c7;
+}
+
+.risk-stock-card__level--low {
+  color: #525252;
+  background: #f5f5f5;
+}
+
+.risk-stock-card__reason {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #404040;
+}
+
+.risk-stock-card__section-title {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #737373;
+}
+
+.risk-stock-card__warnings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.risk-stock-card__warning {
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #b91c1c;
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  border-radius: 999px;
+}

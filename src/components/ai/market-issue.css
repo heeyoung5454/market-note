@@ -1,0 +1,143 @@
+.market-issue-page__loading,
+.market-issue-page__error,
+.market-issue-page__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 240px;
+  font-size: 14px;
+  color: #737373;
+  text-align: center;
+}
+
+.market-issue-page__error {
+  color: #dc2626;
+}
+
+.market-issue-page__spinner {
+  width: 28px;
+  height: 28px;
+  border: 2px solid #e5e5e5;
+  border-top-color: #2563eb;
+  border-radius: 999px;
+  animation: market-issue-spin 0.8s linear infinite;
+}
+
+@keyframes market-issue-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.market-issue-page__list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.market-issue-card {
+  padding: 18px 20px;
+  border: 1px solid #ececec;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.market-issue-card--positive {
+  border-color: #bbf7d0;
+  background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%);
+}
+
+.market-issue-card--negative {
+  border-color: #fecaca;
+  background: linear-gradient(180deg, #fef2f2 0%, #ffffff 100%);
+}
+
+.market-issue-card--neutral {
+  border-color: #e5e5e5;
+  background: linear-gradient(180deg, #fafafa 0%, #ffffff 100%);
+}
+
+.market-issue-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.market-issue-card__title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #171717;
+  line-height: 1.4;
+}
+
+.market-issue-card__impact {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 999px;
+}
+
+.market-issue-card__impact--positive {
+  color: #15803d;
+  background: #dcfce7;
+}
+
+.market-issue-card__impact--negative {
+  color: #b91c1c;
+  background: #fee2e2;
+}
+
+.market-issue-card__impact--neutral {
+  color: #525252;
+  background: #f5f5f5;
+}
+
+.market-issue-card__summary {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #404040;
+}
+
+.market-issue-card__section {
+  margin-top: 10px;
+}
+
+.market-issue-card__section-title {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #737373;
+}
+
+.market-issue-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.market-issue-card__tag {
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 999px;
+}
+
+.market-issue-card__tag--theme {
+  color: #7c3aed;
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
+}
+
+.market-issue-card__tag--stock {
+  color: #1d4ed8;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
