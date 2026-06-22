@@ -32,6 +32,9 @@ export default function Home() {
             if (id === "theme") {
               router.push("/ai/themes");
             }
+            if (id === "watchlist") {
+              router.push("/ai/stocks");
+            }
           }}
         />
 
