@@ -2,10 +2,12 @@
 
 import type { RankStock, RankType } from "@/types/rank.type";
 import dayjs from "dayjs";
-import { useRankStore } from "@/store/useRankStore";
 import RankFilters from "./RankFilters";
 import RankItem from "./RankItem";
-import { getMetricHeader } from "@/utils/formatTradingValue";
+import {
+  getMetricHeader,
+  isInvestorRankType,
+} from "@/utils/formatTradingValue";
 import "./stock.css";
 
 function RankTableBody({
@@ -13,19 +15,19 @@ function RankTableBody({
   isLoading,
   error,
   rankType,
-  marketValueSortCode,
 }: {
   stocks?: RankStock[];
   isLoading: boolean;
   error: Error | null;
   rankType: RankType;
-  marketValueSortCode?: string;
 }) {
+  const columnCount = isInvestorRankType(rankType) ? 6 : 5;
+
   if (isLoading) {
     return (
       <tbody>
         <tr>
-          <td colSpan={5}>
+          <td colSpan={columnCount}>
             <div className="flex flex-col items-center justify-center gap-3 py-16 text-sm text-neutral-400">
               <span className="h-6 w-6 animate-spin rounded-full border-2 border-neutral-200 border-t-neutral-500" />
               순위를 불러오는 중...
@@ -40,7 +42,7 @@ function RankTableBody({
     return (
       <tbody>
         <tr>
-          <td colSpan={5}>
+          <td colSpan={columnCount}>
             <div className="flex items-center justify-center py-16 text-sm text-red-500">
               조회에 실패했습니다. 잠시 후 다시 시도해 주세요.
             </div>
@@ -54,7 +56,7 @@ function RankTableBody({
     return (
       <tbody>
         <tr>
-          <td colSpan={5}>
+          <td colSpan={columnCount}>
             <div className="flex items-center justify-center py-16 text-sm text-neutral-400">
               표시할 종목이 없습니다.
             </div>
@@ -72,7 +74,6 @@ function RankTableBody({
           stock={stock}
           rank={index + 1}
           rankType={rankType}
-          marketValueSortCode={marketValueSortCode}
         />
       ))}
     </tbody>
@@ -91,13 +92,8 @@ export default function RankList({
   rankType: RankType;
 }) {
   const updatedAt = dayjs().format("HH:mm");
-  const { options } = useRankStore();
-  const marketValueSortCode =
-    options.marketValue.fid_rank_sort_cls_code ?? "23";
-  const metricHeader = getMetricHeader(
-    rankType,
-    rankType === "marketValue" ? marketValueSortCode : undefined
-  );
+  const metricHeader = getMetricHeader(rankType);
+  const isInvestorTable = isInvestorRankType(rankType);
 
   return (
     <div className="stock-table-wrap">
@@ -108,9 +104,16 @@ export default function RankList({
         <colgroup>
           <col className="w-14" />
           <col />
-          <col className="w-[6.5rem]" />
           <col className="w-[5.5rem]" />
-          <col className="w-[5.5rem]" />
+          <col className="w-[4.5rem]" />
+          {isInvestorTable ? (
+            <>
+              <col className="w-[4.5rem]" />
+              <col className="w-[4.5rem]" />
+            </>
+          ) : (
+            <col className="w-[5.5rem]" />
+          )}
         </colgroup>
         <thead>
           <tr>
@@ -119,7 +122,14 @@ export default function RankList({
             </th>
             <th className="stock-table__head--numeric">현재가</th>
             <th className="stock-table__head--numeric">등락률</th>
-            <th className="stock-table__head--numeric">{metricHeader}</th>
+            {isInvestorTable ? (
+              <>
+                <th className="stock-table__head--numeric">순매수</th>
+                <th className="stock-table__head--numeric">순매도</th>
+              </>
+            ) : (
+              <th className="stock-table__head--numeric">{metricHeader}</th>
+            )}
           </tr>
         </thead>
         <RankTableBody
@@ -127,9 +137,6 @@ export default function RankList({
           isLoading={isLoading}
           error={error}
           rankType={rankType}
-          marketValueSortCode={
-            rankType === "marketValue" ? marketValueSortCode : undefined
-          }
         />
       </table>
     </div>

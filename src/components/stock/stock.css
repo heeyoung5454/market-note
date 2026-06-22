@@ -4,13 +4,20 @@
 
 .stock-tabs {
   display: flex;
+  overflow-x: auto;
   border-bottom: 1px solid #f5f5f5;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.stock-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .stock-tabs__item {
-  flex: 1;
-  min-width: 0;
-  padding: 16px 8px;
+  flex: 0 0 auto;
+  min-width: 5.5rem;
+  padding: 16px 12px;
   font-size: 14px;
   font-weight: 500;
   color: #a3a3a3;

@@ -1,4 +1,4 @@
-import type { RankType } from "@/types/rank.type";
+import type { InvestorType, RankType } from "@/types/rank.type";
 
 export type RankOptionDef = {
   paramKey: string;
@@ -25,45 +25,35 @@ const STOCK_TYPE_OPTIONS = [
   { value: "2", label: "우선주" },
 ] as const;
 
-const MARKET_VALUE_DIV_OPTIONS = [
-  { value: "0", label: "전체" },
-  { value: "1", label: "관리종목" },
-  { value: "2", label: "투자주의" },
-  { value: "3", label: "투자경고" },
-  { value: "4", label: "투자위험예고" },
-  { value: "5", label: "투자위험" },
-  { value: "6", label: "보통주" },
-  { value: "7", label: "우선주" },
+const INVESTOR_SCOPE_OPTIONS = [
+  { value: "0000", label: "전체" },
+  { value: "0001", label: "코스피" },
+  { value: "1001", label: "코스닥" },
 ] as const;
 
-const FISCAL_YEAR_OPTIONS = Array.from({ length: 4 }, (_, index) => {
-  const year = String(new Date().getFullYear() - index);
-  return { value: year, label: `${year}년` };
-});
+const INVESTOR_RANK_OPTION_DEFS: RankOptionDef[] = [
+  {
+    paramKey: "fid_rank_sort_cls_code",
+    label: "구분",
+    options: [
+      { value: "0", label: "매수" },
+      { value: "1", label: "매도" },
+    ],
+    defaultValue: "0",
+  },
+  {
+    paramKey: "fid_input_iscd",
+    label: "대상",
+    options: [...INVESTOR_SCOPE_OPTIONS],
+    defaultValue: "0000",
+  },
+];
 
-const FISCAL_QUARTER_OPTIONS = [
-  { value: "0", label: "1/4분기" },
-  { value: "1", label: "반기" },
-  { value: "2", label: "3/4분기" },
-  { value: "3", label: "결산" },
-] as const;
-
-const MARKET_VALUE_SORT_OPTIONS = [
-  { value: "23", label: "PER" },
-  { value: "24", label: "PBR" },
-  { value: "25", label: "PCR" },
-  { value: "26", label: "PSR" },
-  { value: "27", label: "EPS" },
-  { value: "28", label: "EVA" },
-  { value: "29", label: "EBITDA" },
-  { value: "30", label: "EV/EBITDA" },
-  { value: "31", label: "EBITDA/금융비용" },
-] as const;
-
-export const MARKET_VALUE_METRIC_LABELS: Record<string, string> =
-  Object.fromEntries(
-    MARKET_VALUE_SORT_OPTIONS.map((option) => [option.value, option.label])
-  );
+export const INVESTOR_TYPES: InvestorType[] = [
+  "foreign",
+  "institution",
+  "individual",
+];
 
 export const RANK_OPTION_DEFS: Record<RankType, RankOptionDef[]> = {
   volume: [
@@ -164,50 +154,42 @@ export const RANK_OPTION_DEFS: Record<RankType, RankOptionDef[]> = {
       defaultValue: "0",
     },
   ],
-  marketValue: [
+  tradingAmount: [
     {
-      paramKey: "fid_cond_mrkt_div_code",
+      paramKey: "FID_COND_MRKT_DIV_CODE",
       label: "시장",
       options: [...MARKET_OPTIONS],
       defaultValue: "J",
     },
     {
-      paramKey: "fid_input_iscd",
+      paramKey: "FID_INPUT_ISCD",
       label: "대상",
       options: [...SCOPE_OPTIONS],
       defaultValue: "0000",
     },
     {
-      paramKey: "fid_div_cls_code",
+      paramKey: "FID_DIV_CLS_CODE",
       label: "종목구분",
-      options: [...MARKET_VALUE_DIV_OPTIONS],
+      options: [...STOCK_TYPE_OPTIONS],
       defaultValue: "0",
     },
-    {
-      paramKey: "fid_rank_sort_cls_code",
-      label: "가치지표",
-      options: [...MARKET_VALUE_SORT_OPTIONS],
-      defaultValue: "23",
-    },
-    {
-      paramKey: "fid_input_option_1",
-      label: "회계연도",
-      options: FISCAL_YEAR_OPTIONS,
-      defaultValue: String(new Date().getFullYear() - 1),
-    },
-    {
-      paramKey: "fid_input_option_2",
-      label: "분기구분",
-      options: [...FISCAL_QUARTER_OPTIONS],
-      defaultValue: "3",
-    },
   ],
+  investorTrade: INVESTOR_RANK_OPTION_DEFS,
 };
 
 export function getDefaultRankOptions(type: RankType) {
-  return Object.fromEntries(
+  const options = Object.fromEntries(
     RANK_OPTION_DEFS[type].map((def) => [def.paramKey, def.defaultValue])
   );
+
+  if (type === "investorTrade") {
+    return {
+      investor_type: "foreign",
+      ...options,
+    };
+  }
+
+  return options;
 }
 
 export function getInitialRankOptions() {
@@ -215,7 +197,8 @@ export function getInitialRankOptions() {
     volume: getDefaultRankOptions("volume"),
     rise: getDefaultRankOptions("rise"),
     amount: getDefaultRankOptions("amount"),
-    marketValue: getDefaultRankOptions("marketValue"),
+    tradingAmount: getDefaultRankOptions("tradingAmount"),
+    investorTrade: getDefaultRankOptions("investorTrade"),
   } satisfies Record<RankType, Record<string, string>>;
 }
 
@@ -236,6 +219,17 @@ export function parseRankOverrides(
 
     if (isValid) {
       overrides[def.paramKey] = value;
+    }
+  }
+
+  if (type === "investorTrade") {
+    const investorType = searchParams.get("investor_type");
+
+    if (
+      investorType &&
+      INVESTOR_TYPES.includes(investorType as InvestorType)
+    ) {
+      overrides.investor_type = investorType;
     }
   }
 

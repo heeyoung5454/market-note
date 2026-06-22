@@ -9,7 +9,9 @@ const RANK_ENDPOINTS: Record<RankType, string> = {
   volume: "/uapi/domestic-stock/v1/quotations/volume-rank",
   rise: "/uapi/domestic-stock/v1/ranking/fluctuation",
   amount: "/uapi/domestic-stock/v1/ranking/market-cap",
-  marketValue: "/uapi/domestic-stock/v1/ranking/market-value",
+  tradingAmount:
+    "/uapi/domestic-stock/v1/quotations/trading-amount-rank",
+  investorTrade: "/uapi/domestic-stock/v1/quotations/investor-trade-rank",
 };
 
 export function useRankStocks(

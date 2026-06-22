@@ -1,7 +1,13 @@
 import { handleRankRequest } from "@/lib/handleRankRequest";
 import type { RankType } from "@/types/rank.type";
 
-const VALID_TYPES: RankType[] = ["volume", "rise", "amount", "marketValue"];
+const VALID_TYPES: RankType[] = [
+  "volume",
+  "rise",
+  "amount",
+  "tradingAmount",
+  "investorTrade",
+];
 
 export async function GET(
   request: Request,

@@ -1,4 +1,3 @@
-import { MARKET_VALUE_METRIC_LABELS } from "@/constants/rankOptions";
 import type { RankType } from "@/types/rank.type";
 
 export function formatTradingAmount(amount?: string) {
@@ -48,61 +47,40 @@ export function formatMarketCap(marketCap?: string) {
   return `${value.toLocaleString()}억`;
 }
 
-export function formatIndicatorValue(value?: string) {
-  if (!value) {
+export function formatNetTradeAmount(amount?: string) {
+  if (!amount) {
     return "-";
   }
 
-  const numeric = Number(value);
+  const value = Number(amount);
 
-  if (Number.isNaN(numeric)) {
+  if (Number.isNaN(value) || value === 0) {
     return "-";
   }
 
-  return numeric.toLocaleString(undefined, {
-    maximumFractionDigits: 2,
-  });
+  const eok = Math.round(value / 100);
+  if (eok === 0) {
+    return `${value.toLocaleString()}백만`;
+  }
+
+  return `${eok.toLocaleString()}억`;
 }
 
-export function getMetricHeader(
-  type: RankType,
-  marketValueSortCode?: string
-) {
+export function isInvestorRankType(type: RankType) {
+  return type === "investorTrade";
+}
+
+export function getMetricHeader(type: RankType) {
   const headers: Record<RankType, string> = {
     volume: "거래량",
     rise: "거래대금",
     amount: "시가총액",
-    marketValue:
-      MARKET_VALUE_METRIC_LABELS[marketValueSortCode ?? "23"] ?? "가치지표",
+    tradingAmount: "거래대금",
+    investorTrade: "순매수",
   };
 
   return headers[type];
 }
-
-const MARKET_VALUE_FIELD_MAP: Record<
-  string,
-  keyof {
-    per?: string;
-    pbr?: string;
-    pcr?: string;
-    psr?: string;
-    eps?: string;
-    eva?: string;
-    ebitda?: string;
-    pvDivEbitda?: string;
-    ebitdaDivFnncExpn?: string;
-  }
-> = {
-  "23": "per",
-  "24": "pbr",
-  "25": "pcr",
-  "26": "psr",
-  "27": "eps",
-  "28": "eva",
-  "29": "ebitda",
-  "30": "pvDivEbitda",
-  "31": "ebitdaDivFnncExpn",
-};
 
 export function formatMetricValue(
   type: RankType,
@@ -110,17 +88,8 @@ export function formatMetricValue(
     volume?: string;
     amount?: string;
     marketCap?: string;
-    per?: string;
-    pbr?: string;
-    pcr?: string;
-    psr?: string;
-    eps?: string;
-    eva?: string;
-    ebitda?: string;
-    pvDivEbitda?: string;
-    ebitdaDivFnncExpn?: string;
-  },
-  marketValueSortCode?: string
+    netBuyAmount?: string;
+  }
 ) {
   if (type === "volume") {
     return formatTradingVolume(stock.volume);
@@ -130,11 +99,9 @@ export function formatMetricValue(
     return formatMarketCap(stock.marketCap);
   }
 
-  if (type === "marketValue") {
-    const field =
-      MARKET_VALUE_FIELD_MAP[marketValueSortCode ?? "23"] ?? "per";
-    return formatIndicatorValue(stock[field]);
+  if (type === "tradingAmount" || type === "rise") {
+    return formatTradingAmount(stock.amount);
   }
 
-  return formatTradingAmount(stock.amount);
+  return "-";
 }

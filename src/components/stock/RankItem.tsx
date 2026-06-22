@@ -2,7 +2,11 @@
 
 import type { RankStock, RankType } from "@/types/rank.type";
 import { formatChangeRate } from "@/utils/formatChangeRate";
-import { formatMetricValue } from "@/utils/formatTradingValue";
+import {
+  formatMetricValue,
+  formatNetTradeAmount,
+  isInvestorRankType,
+} from "@/utils/formatTradingValue";
 import { Heart } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -10,16 +14,15 @@ export default function RankItem({
   stock,
   rank,
   rankType,
-  marketValueSortCode,
 }: {
   stock: RankStock;
   rank: number;
   rankType: RankType;
-  marketValueSortCode?: string;
 }) {
   const router = useRouter();
   const change = formatChangeRate(stock.changeRate);
-  const metric = formatMetricValue(rankType, stock, marketValueSortCode);
+  const metric = formatMetricValue(rankType, stock);
+  const isInvestorTable = isInvestorRankType(rankType);
 
   const handleClick = () => {
     const params = new URLSearchParams({ name: stock.name });
@@ -55,9 +58,24 @@ export default function RankItem({
         </span>
       </td>
 
-      <td className="stock-table__cell--numeric">
-        <span className="stock-table__metric">{metric}</span>
-      </td>
+      {isInvestorTable ? (
+        <>
+          <td className="stock-table__cell--numeric">
+            <span className="stock-table__metric stock-direction--up">
+              {formatNetTradeAmount(stock.netBuyAmount)}
+            </span>
+          </td>
+          <td className="stock-table__cell--numeric">
+            <span className="stock-table__metric stock-direction--down">
+              {formatNetTradeAmount(stock.netSellAmount)}
+            </span>
+          </td>
+        </>
+      ) : (
+        <td className="stock-table__cell--numeric">
+          <span className="stock-table__metric">{metric}</span>
+        </td>
+      )}
     </tr>
   );
 }

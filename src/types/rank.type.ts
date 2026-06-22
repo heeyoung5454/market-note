@@ -1,4 +1,11 @@
-export type RankType = "volume" | "rise" | "amount" | "marketValue";
+export type RankType =
+  | "volume"
+  | "rise"
+  | "amount"
+  | "tradingAmount"
+  | "investorTrade";
+
+export type InvestorType = "foreign" | "institution" | "individual";
 
 export type RankStock = {
   code: string;
@@ -8,6 +15,9 @@ export type RankStock = {
   volume?: string;
   amount?: string;
   marketCap?: string;
+  netBuyAmount?: string;
+  netSellAmount?: string;
+  netBuyQty?: string;
   per?: string;
   pbr?: string;
   pcr?: string;

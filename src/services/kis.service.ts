@@ -170,7 +170,20 @@ export async function getStockQuote(accessToken: string, code: string) {
   };
 }
 
-type RankType = "volume" | "rise" | "amount" | "marketValue";
+type RankType =
+  | "volume"
+  | "rise"
+  | "amount"
+  | "tradingAmount"
+  | "investorTrade";
+
+type InvestorType = "foreign" | "institution" | "individual";
+
+const INVESTOR_ETC_CLS_CODE: Record<Exclude<InvestorType, "individual">, string> =
+  {
+    foreign: "1",
+    institution: "2",
+  };
 
 const RANK_API: Record<
   RankType,
@@ -228,26 +241,127 @@ const RANK_API: Record<
       fid_rsfl_rate2: "30",
     },
   },
-  marketValue: {
-    path: "/uapi/domestic-stock/v1/ranking/market-value",
-    trId: "FHPST01790000",
+  tradingAmount: {
+    path: "/uapi/domestic-stock/v1/quotations/volume-rank",
+    trId: "FHPST01710000",
     params: {
-      fid_trgt_cls_code: "0",
-      fid_cond_mrkt_div_code: "J",
-      fid_cond_scr_div_code: "20179",
+      FID_COND_MRKT_DIV_CODE: "J",
+      FID_COND_SCR_DIV_CODE: "20171",
+      FID_INPUT_ISCD: "0000",
+      FID_DIV_CLS_CODE: "0",
+      FID_BLNG_CLS_CODE: "3",
+      FID_TRGT_CLS_CODE: "111111111",
+      FID_TRGT_EXLS_CLS_CODE: "0000000000",
+      FID_INPUT_PRICE_1: "",
+      FID_INPUT_PRICE_2: "",
+      FID_VOL_CNT: "",
+      FID_INPUT_DATE_1: "",
+    },
+  },
+  investorTrade: {
+    path: "/uapi/domestic-stock/v1/quotations/foreign-institution-total",
+    trId: "FHPTJ04400000",
+    params: {
+      fid_cond_mrkt_div_code: "V",
+      fid_cond_scr_div_code: "16449",
       fid_input_iscd: "0000",
-      fid_div_cls_code: "0",
-      fid_input_price_1: "",
-      fid_input_price_2: "",
-      fid_vol_cnt: "",
-      fid_input_option_1: String(new Date().getFullYear() - 1),
-      fid_input_option_2: "3",
-      fid_rank_sort_cls_code: "23",
-      fid_blng_cls_code: "0",
-      fid_trgt_exls_cls_code: "0",
+      fid_div_cls_code: "1",
+      fid_rank_sort_cls_code: "0",
+      fid_etc_cls_code: "1",
     },
   },
 };
+
+type InvestorPrefix = "frgn" | "orgn" | "prsn";
+
+function hasTradeAmount(value?: string) {
+  const num = Number(value);
+  return value !== undefined && value !== "" && !Number.isNaN(num) && num !== 0;
+}
+
+function buildInvestorTradeAmounts(
+  data: Record<string, string>,
+  prefix: InvestorPrefix
+) {
+  const net = Number(data[`${prefix}_ntby_tr_pbmn`]);
+  const grossBuy = data[`${prefix}_shnu_tr_pbmn`];
+  const grossSell = data[`${prefix}_seln_tr_pbmn`];
+
+  if (Number.isNaN(net) || net === 0) {
+    return {
+      netBuyAmount: hasTradeAmount(grossBuy) ? grossBuy : undefined,
+      netSellAmount: hasTradeAmount(grossSell) ? grossSell : undefined,
+    };
+  }
+
+  if (net > 0) {
+    return {
+      netBuyAmount: String(net),
+      netSellAmount: hasTradeAmount(grossSell) ? grossSell : undefined,
+    };
+  }
+
+  return {
+    netBuyAmount: hasTradeAmount(grossBuy) ? grossBuy : undefined,
+    netSellAmount: String(Math.abs(net)),
+  };
+}
+
+async function enrichInvestorRankOutput(
+  accessToken: string,
+  data: Record<string, unknown>,
+  prefix: Exclude<InvestorPrefix, "prsn">
+) {
+  const items = (data.output ?? data.Output ?? []) as Record<
+    string,
+    string
+  >[];
+  const qtyKey =
+    prefix === "frgn" ? "frgn_ntby_qty" : "orgn_ntby_qty";
+  const amountKey =
+    prefix === "frgn" ? "frgn_ntby_tr_pbmn" : "orgn_ntby_tr_pbmn";
+
+  const output = await Promise.all(
+    items.slice(0, 20).map(async (item) => {
+      const code = item.mksc_shrn_iscd ?? "";
+      const result = await fetchInvestorTrade(accessToken, code);
+      const today = ((result.output ?? result.Output ?? []) as Record<
+        string,
+        string
+      >[])[0];
+      const amounts = today
+        ? buildInvestorTradeAmounts(today, prefix)
+        : (() => {
+            const net = Number(item[amountKey]);
+            if (net > 0) {
+              return { netBuyAmount: String(net), netSellAmount: undefined };
+            }
+            if (net < 0) {
+              return {
+                netBuyAmount: undefined,
+                netSellAmount: String(Math.abs(net)),
+              };
+            }
+            return { netBuyAmount: undefined, netSellAmount: undefined };
+          })();
+
+      return {
+        code,
+        name: item.hts_kor_isnm ?? "",
+        price: item.stck_prpr ?? "0",
+        changeRate: item.prdy_ctrt,
+        netBuyAmount: amounts.netBuyAmount,
+        netSellAmount: amounts.netSellAmount,
+        netBuyQty: item[qtyKey],
+      };
+    })
+  );
+
+  return {
+    ...data,
+    output,
+  };
+}
 
 function normalizeRankOutput(data: Record<string, unknown>) {
   const items = (data.output ?? data.Output ?? []) as Record<
@@ -300,11 +414,143 @@ async function fetchKisApi(
   return response.json();
 }
 
+async function fetchInvestorTrade(
+  accessToken: string,
+  symbol: string
+) {
+  return fetchKisApi(
+    accessToken,
+    "/uapi/domestic-stock/v1/quotations/inquire-investor",
+    "FHKST01010900",
+    {
+      FID_COND_MRKT_DIV_CODE: "J",
+      FID_INPUT_ISCD: symbol,
+    }
+  );
+}
+
+async function getIndividualInvestorRank(
+  accessToken: string,
+  overrides: Record<string, string> = {}
+) {
+  const scope = overrides.fid_input_iscd ?? "0000";
+  const isBuyRank = (overrides.fid_rank_sort_cls_code ?? "0") === "0";
+  const tradingConfig = RANK_API.tradingAmount;
+  const tradingParams = {
+    ...tradingConfig.params,
+    FID_INPUT_ISCD: scope,
+  };
+  const tradingResult = await fetchKisApi(
+    accessToken,
+    tradingConfig.path,
+    tradingConfig.trId,
+    tradingParams
+  );
+  const candidates = normalizeRankOutput(tradingResult).output.slice(0, 50);
+
+  const ranked = (
+    await Promise.all(
+      candidates.map(async (stock) => {
+        const result = await fetchInvestorTrade(accessToken, stock.code);
+        const today = ((result.output ?? result.Output ?? []) as Record<
+          string,
+          string
+        >[])[0];
+
+        if (!today) {
+          return null;
+        }
+
+        const netAmount = Number(today.prsn_ntby_tr_pbmn);
+
+        if (Number.isNaN(netAmount) || netAmount === 0) {
+          return null;
+        }
+
+        if (isBuyRank && netAmount <= 0) {
+          return null;
+        }
+
+        if (!isBuyRank && netAmount >= 0) {
+          return null;
+        }
+
+        const amounts = buildInvestorTradeAmounts(today, "prsn");
+
+        return {
+          code: stock.code,
+          name: stock.name,
+          price: stock.price,
+          changeRate: stock.changeRate,
+          netBuyAmount: amounts.netBuyAmount,
+          netSellAmount: amounts.netSellAmount,
+          netBuyQty: today.prsn_ntby_qty,
+        };
+      })
+    )
+  )
+    .filter((stock): stock is NonNullable<typeof stock> => stock !== null)
+    .sort((a, b) => {
+      const aValue = Number(a.netBuyAmount ?? a.netSellAmount ?? 0);
+      const bValue = Number(b.netBuyAmount ?? b.netSellAmount ?? 0);
+      return bValue - aValue;
+    })
+    .slice(0, 20);
+
+  return { output: ranked };
+}
+
+async function getInvestorTradeRank(
+  accessToken: string,
+  overrides: Record<string, string> = {}
+) {
+  const investorType = (overrides.investor_type ?? "foreign") as InvestorType;
+
+  if (investorType === "individual") {
+    return getIndividualInvestorRank(accessToken, overrides);
+  }
+
+  const config = RANK_API.investorTrade;
+  const params = {
+    ...config.params,
+    fid_input_iscd: overrides.fid_input_iscd ?? config.params.fid_input_iscd,
+    fid_rank_sort_cls_code:
+      overrides.fid_rank_sort_cls_code ?? config.params.fid_rank_sort_cls_code,
+    fid_etc_cls_code: INVESTOR_ETC_CLS_CODE[investorType],
+  };
+  const result = await fetchKisApi(
+    accessToken,
+    config.path,
+    config.trId,
+    params
+  );
+
+  const investorField = investorType === "foreign" ? "frgn" : "orgn";
+
+  if (result.rt_cd === "1" && result.msg_cd === "EGW00121") {
+    clearTokenCache();
+    const freshToken = await getValidAccessToken();
+    const retried = await fetchKisApi(
+      freshToken,
+      config.path,
+      config.trId,
+      params
+    );
+    return enrichInvestorRankOutput(freshToken, retried, investorField);
+  }
+
+  return enrichInvestorRankOutput(accessToken, result, investorField);
+}
+
 export async function getRankStocks(
   accessToken: string,
   type: RankType,
   overrides: Record<string, string> = {}
 ) {
+  if (type === "investorTrade") {
+    return getInvestorTradeRank(accessToken, overrides);
+  }
+
   const config = RANK_API[type];
   const params = { ...config.params, ...overrides };
   const result = await fetchKisApi(
