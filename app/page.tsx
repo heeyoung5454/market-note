@@ -41,6 +41,12 @@ export default function Home() {
             if (id === "risk") {
               router.push("/ai/risks");
             }
+            if (id === "sentiment") {
+              router.push("/ai/sentiment");
+            }
+            if (id === "outlook") {
+              router.push("/ai/outlook");
+            }
           }}
         />
 

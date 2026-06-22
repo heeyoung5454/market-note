@@ -1,0 +1,204 @@
+.market-outlook-page__loading,
+.market-outlook-page__error,
+.market-outlook-page__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 240px;
+  font-size: 14px;
+  color: #737373;
+  text-align: center;
+}
+
+.market-outlook-page__error {
+  color: #dc2626;
+}
+
+.market-outlook-page__spinner {
+  width: 28px;
+  height: 28px;
+  border: 2px solid #e5e5e5;
+  border-top-color: #7c3aed;
+  border-radius: 999px;
+  animation: market-outlook-spin 0.8s linear infinite;
+}
+
+@keyframes market-outlook-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.market-outlook-page__content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.market-outlook-hero {
+  padding: 22px 20px;
+  border: 1px solid #ddd6fe;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #f5f3ff 0%, #ffffff 55%, #faf5ff 100%);
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.08);
+}
+
+.market-outlook-hero__label {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #7c3aed;
+}
+
+.market-outlook-hero__summary {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.6;
+  color: #171717;
+}
+
+.market-outlook-card {
+  padding: 18px 20px;
+  border: 1px solid #ececec;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.market-outlook-card--highlight {
+  border-color: #c4b5fd;
+  background: linear-gradient(180deg, #faf5ff 0%, #ffffff 100%);
+}
+
+.market-outlook-card__title {
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #171717;
+}
+
+.market-outlook-card__text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #404040;
+}
+
+.market-outlook-card__index-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.market-outlook-card__index-item {
+  padding: 12px 14px;
+  border: 1px solid #f0f0f0;
+  border-radius: 12px;
+  background: #fafafa;
+}
+
+.market-outlook-card__index-name {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #737373;
+}
+
+.market-outlook-card__index-value {
+  display: block;
+  font-size: 18px;
+  font-weight: 700;
+  color: #171717;
+}
+
+.market-outlook-card__index-change {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.market-outlook-card__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.market-outlook-card__stat {
+  padding: 12px 14px;
+  border: 1px solid #f0f0f0;
+  border-radius: 12px;
+  background: #fafafa;
+}
+
+.market-outlook-card__stat-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #737373;
+}
+
+.market-outlook-card__stat-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #171717;
+}
+
+.market-outlook-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.market-outlook-card__tag {
+  padding: 6px 11px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 999px;
+}
+
+.market-outlook-card__tag--theme {
+  color: #7c3aed;
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
+}
+
+.market-outlook-card__tag--stock {
+  color: #1d4ed8;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+
+.market-outlook-card__tag--risk {
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.market-outlook-card__list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #525252;
+}
+
+.market-outlook-card__list li + li {
+  margin-top: 4px;
+}
+
+.market-outlook-card__foreign,
+.market-outlook-card__us-news {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #525252;
+  white-space: pre-line;
+}
