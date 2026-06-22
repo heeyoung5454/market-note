@@ -141,6 +141,38 @@ export async function getCurrentPrice(accessToken: string, symbol: string) {
   return result;
 }
 
+export async function getIndexPrice(accessToken: string, indexCode: string) {
+  const result = await fetchKisApi(
+    accessToken,
+    "/uapi/domestic-stock/v1/quotations/inquire-index-price",
+    "FHPUP02100000",
+    {
+      FID_COND_MRKT_DIV_CODE: "U",
+      FID_INPUT_ISCD: indexCode,
+      FID_INPUT_DATE_1: "",
+      FID_INPUT_DATE_2: "",
+    }
+  );
+
+  if (result.rt_cd === "1" && result.msg_cd === "EGW00121") {
+    clearTokenCache();
+    const freshToken = await getValidAccessToken();
+    return fetchKisApi(
+      freshToken,
+      "/uapi/domestic-stock/v1/quotations/inquire-index-price",
+      "FHPUP02100000",
+      {
+        FID_COND_MRKT_DIV_CODE: "U",
+        FID_INPUT_ISCD: indexCode,
+        FID_INPUT_DATE_1: "",
+        FID_INPUT_DATE_2: "",
+      }
+    );
+  }
+
+  return result;
+}
+
 export async function getStockQuote(accessToken: string, code: string) {
   const result = await getCurrentPrice(accessToken, code);
 
@@ -540,6 +572,39 @@ async function getInvestorTradeRank(
   }
 
   return enrichInvestorRankOutput(accessToken, result, investorField);
+}
+
+export async function getInvestorRankSnapshot(
+  accessToken: string,
+  investorType: "foreign" | "institution"
+) {
+  const etcClsCode = INVESTOR_ETC_CLS_CODE[investorType];
+  const prefix = investorType === "foreign" ? "frgn" : "orgn";
+  const amountKey = `${prefix}_ntby_tr_pbmn`;
+  const config = RANK_API.investorTrade;
+  const result = await fetchKisApi(
+    accessToken,
+    config.path,
+    config.trId,
+    {
+      ...config.params,
+      fid_etc_cls_code: etcClsCode,
+      fid_rank_sort_cls_code: "0",
+    }
+  );
+
+  const items = (result.output ?? result.Output ?? []) as Record<
+    string,
+    string
+  >[];
+
+  return items.slice(0, 5).map((item) => ({
+    code: item.mksc_shrn_iscd ?? "",
+    name: item.hts_kor_isnm ?? "",
+    price: item.stck_prpr ?? "0",
+    changeRate: item.prdy_ctrt,
+    netBuyAmount: item[amountKey],
+  }));
 }
 
 export async function getRankStocks(

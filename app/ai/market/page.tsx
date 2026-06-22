@@ -1,0 +1,22 @@
+import MarketBriefingView from "@/components/ai/MarketBriefingView";
+import Link from "next/link";
+import "@/components/ai/market-briefing.css";
+
+export default function MarketBriefingPage() {
+  return (
+    <main className="market-briefing-page">
+      <div className="market-briefing-page__inner">
+        <Link href="/" className="market-briefing-page__back">
+          ← 홈으로
+        </Link>
+
+        <header className="market-briefing-page__header">
+          <p className="market-briefing-page__eyebrow">AI 센터</p>
+          <h1 className="market-briefing-page__title">시장 브리핑</h1>
+        </header>
+
+        <MarketBriefingView />
+      </div>
+    </main>
+  );
+}

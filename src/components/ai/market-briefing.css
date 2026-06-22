@@ -1,0 +1,218 @@
+.market-briefing-page {
+  min-height: 100vh;
+  background: #f4f5f7;
+}
+
+.market-briefing-page__inner {
+  margin: 0 auto;
+  max-width: 48rem;
+  padding: 24px 16px 40px;
+}
+
+.market-briefing-page__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #737373;
+  text-decoration: none;
+}
+
+.market-briefing-page__back:hover {
+  color: #171717;
+}
+
+.market-briefing-page__header {
+  margin-bottom: 20px;
+}
+
+.market-briefing-page__eyebrow {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #7c3aed;
+}
+
+.market-briefing-page__title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #171717;
+}
+
+.market-briefing-page__card {
+  margin-bottom: 16px;
+  padding: 18px 20px;
+  border: 1px solid #e9e5ff;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 2px 16px rgba(91, 33, 182, 0.05);
+}
+
+.market-briefing-page__card-title {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #171717;
+}
+
+.market-briefing-page__index-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.market-briefing-page__index-item {
+  padding: 12px 14px;
+  border: 1px solid #f0f0f0;
+  border-radius: 12px;
+  background: #fafafa;
+}
+
+.market-briefing-page__index-name {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: #737373;
+}
+
+.market-briefing-page__index-price {
+  display: block;
+  font-size: 18px;
+  font-weight: 700;
+  color: #171717;
+}
+
+.market-briefing-page__index-change {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.market-briefing-page__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.market-briefing-page__list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #f0f0f0;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.market-briefing-page__list-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #171717;
+}
+
+.market-briefing-page__list-meta {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: #737373;
+}
+
+.market-briefing-page__section-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.market-briefing-page__summary {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: #171717;
+}
+
+.market-briefing-page__paragraph {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #404040;
+}
+
+.market-briefing-page__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.market-briefing-page__tag {
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 999px;
+}
+
+.market-briefing-page__tag--strong {
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+.market-briefing-page__tag--weak {
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+.market-briefing-page__news-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.market-briefing-page__news-item {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #525252;
+}
+
+.market-briefing-page__loading,
+.market-briefing-page__error,
+.market-briefing-page__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 240px;
+  font-size: 14px;
+  color: #737373;
+  text-align: center;
+}
+
+.market-briefing-page__error {
+  color: #dc2626;
+}
+
+.market-briefing-page__spinner {
+  width: 28px;
+  height: 28px;
+  border: 2px solid #e5e5e5;
+  border-top-color: #7c3aed;
+  border-radius: 999px;
+  animation: market-briefing-spin 0.8s linear infinite;
+}
+
+@keyframes market-briefing-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,13 +1,16 @@
 "use client";
 
+import AiCenter from "@/components/ai/AiCenter";
 import RankList from "@/components/stock/RankList";
 import RankTabs from "@/components/stock/RankTabs";
 import StockMemoWidget from "@/components/stock/StockMemoWidget";
 import StockSearchTrigger from "@/components/stock/StockSearchTrigger";
 import { useRankStocks } from "@/hooks/useRankStocks";
 import { useRankStore } from "@/store/useRankStore";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const router = useRouter();
   const { selected, options } = useRankStore();
   const { data, isLoading, error } = useRankStocks(selected, options[selected]);
 
@@ -19,6 +22,17 @@ export default function Home() {
           <p className="text-xs font-medium uppercase tracking-widest text-neutral-400">
             Market Note
           </p>
+        </header>
+
+        <AiCenter
+          onSelectItem={(id) => {
+            if (id === "marketBriefing") {
+              router.push("/ai/market");
+            }
+          }}
+        />
+
+        <header className="mb-5 shrink-0">
           <div className="stock-rank-header__title-row">
             <h1 className="stock-rank-header__title">
               국내 주식 순위
