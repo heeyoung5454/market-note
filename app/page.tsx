@@ -29,6 +29,9 @@ export default function Home() {
             if (id === "marketBriefing") {
               router.push("/ai/market");
             }
+            if (id === "theme") {
+              router.push("/ai/themes");
+            }
           }}
         />
 
